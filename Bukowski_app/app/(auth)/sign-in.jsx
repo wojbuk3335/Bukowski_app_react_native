@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
@@ -8,7 +8,7 @@ import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
 import { bukowski_login } from "../../lib/bukowski";
 import { signUp } from "../../lib/appwrite";
-
+import { GlobalStateContext } from "../../context/GlobalState";
 
 const SignIn = () => {
   const [isSubmitting, setSubmitting] = useState(false);
@@ -17,11 +17,14 @@ const SignIn = () => {
     password: "",
   });
   const navigation = useNavigation();
+  const { setUser } = useContext(GlobalStateContext); // Access global state
 
   const submit = async () => {
     setSubmitting(true);
     try {
-      await signUp(form.email, form.password, navigation);
+      const response = await bukowski_login(form.email, form.password, navigation);
+      setUser(response); // Update global state with user data
+      navigation.navigate("(tabs)"); // Redirect to home screen
     } catch (error) {
       Alert.alert("Login Failed", error.message);
     } finally {

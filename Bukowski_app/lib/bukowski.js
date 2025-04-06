@@ -14,13 +14,10 @@ export const bukowski_login = async (email, password, navigation) => {
         }
 
         const data = await response.json();
-        // Handle successful login (e.g., save token, user data, etc.)
-        console.log("Login successful:", data);
-
-        // Redirect to home
-        alert(response.token);
+        console.log("Login successful:", data); // Debug log
+        return data; // Return user data
     } catch (error) {
-        console.error("Login error:", error.message);
+        console.error("Login error:", error.message); // Debug log
         throw error;
     }
 };

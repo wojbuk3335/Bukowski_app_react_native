@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { SplashScreen } from 'expo-router';
 import { useFonts } from 'expo-font';
 import "react-native-url-polyfill/auto";
+import { GlobalStateProvider } from "../context/GlobalState"; // Import global state provider
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,11 +38,13 @@ const RootLayout = () => {
   }
 
   return (
-    <Stack options={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-    </Stack>
+    <GlobalStateProvider>
+      <Stack options={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      </Stack>
+    </GlobalStateProvider>
   );
 };
 

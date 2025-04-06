@@ -1,12 +1,22 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { GlobalStateContext } from '../../context/GlobalState'; // Import global state context
 
 const Home = () => {
+  const { user } = useContext(GlobalStateContext); // Access global state
+
+  console.log("Current User in Global State:", user); // Debug log
+
   return (
     <>
       <SafeAreaView className="px-4 my-6 bg-primary h-full">
         <View style={styles.container}>
-          <Text style={styles.text}>Home Screen</Text>
+          <Text style={styles.text}>Welcome to the Home Screen</Text>
+          {user ? (
+            <Text style={styles.text}>Logged in as: {user.role}</Text> // Display user email
+          ) : (
+            <Text style={styles.text}>No user logged in</Text> // Fallback message
+          )}
         </View>
       </SafeAreaView>
     </>
@@ -23,5 +33,6 @@ const styles = StyleSheet.create({
   },
   text: {
     color: 'white',
+    fontSize: 16,
   },
 });
