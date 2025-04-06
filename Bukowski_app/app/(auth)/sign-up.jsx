@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
+import { createUser } from "../../lib/appwrite";
 
 import { images } from "../../constants";
 import CustomButton from "../../components/CustomButton";
@@ -17,7 +18,19 @@ const SignUp = () => {
   });
 
   const submit = async () => {
+    if (form.username === "" || form.email === "" || form.password === "") {
+      Alert.alert("Error", "Please fill in all fields");
+    }
 
+    setSubmitting(true);
+    try {
+      const result = await createUser(form.email, form.password, form.username);
+      alert("User created successfully", result);
+    } catch (error) {
+      Alert.alert("Error", error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -42,14 +55,14 @@ const SignUp = () => {
           <FormField
             title="Username"
             value={form.username}
-            handleChangeText={(e) => setForm({ ...form, username: e })}
+            handleChangeText={(e) => setForm({ ...form, username: e.trim() })}
             otherStyles="mt-10"
           />
 
           <FormField
             title="Email"
             value={form.email}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e) => setForm({ ...form, email: e.trim() })}
             otherStyles="mt-7"
             keyboardType="email-address"
           />
@@ -57,7 +70,7 @@ const SignUp = () => {
           <FormField
             title="Password"
             value={form.password}
-            handleChangeText={(e) => setForm({ ...form, password: e })}
+            handleChangeText={(e) => setForm({ ...form, password: e.trim() })}
             otherStyles="mt-7"
           />
 

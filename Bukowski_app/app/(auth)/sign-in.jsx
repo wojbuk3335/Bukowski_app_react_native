@@ -1,11 +1,14 @@
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, useNavigation } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
 
 import { images } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
+import { bukowski_login } from "../../lib/bukowski";
+import { signUp } from "../../lib/appwrite";
+
 
 const SignIn = () => {
   const [isSubmitting, setSubmitting] = useState(false);
@@ -13,9 +16,17 @@ const SignIn = () => {
     email: "",
     password: "",
   });
+  const navigation = useNavigation();
 
   const submit = async () => {
-
+    setSubmitting(true);
+    try {
+      await signUp(form.email, form.password, navigation);
+    } catch (error) {
+      Alert.alert("Login Failed", error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -40,7 +51,7 @@ const SignIn = () => {
           <FormField
             title="Email"
             value={form.email}
-            handleChangeText={(e) => setForm({ ...form, email: e })}
+            handleChangeText={(e) => setForm({ ...form, email: e.trim() })}
             otherStyles="mt-7"
             keyboardType="email-address"
           />
@@ -48,7 +59,7 @@ const SignIn = () => {
           <FormField
             title="Password"
             value={form.password}
-            handleChangeText={(e) => setForm({ ...form, password: e })}
+            handleChangeText={(e) => setForm({ ...form, password: e.trim() })}
             otherStyles="mt-7"
           />
 

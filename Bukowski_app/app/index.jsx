@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, Link } from "expo-router";
 import { View, Text, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -54,6 +54,7 @@ const Welcome = () => {
             handlePress={() => router.push("/sign-in")}
             containerStyles="w-full mt-7"
           />
+          <Link href='/home' style={{}}>go home</Link>
         </View>
       </ScrollView>
 
