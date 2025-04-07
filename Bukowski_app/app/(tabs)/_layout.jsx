@@ -7,7 +7,6 @@ import { icons } from "../../constants";
 const TabIcon = ({ icon, color, name, focused }) => {
   return (
     <View className="flex items-center justify-center gap-2 w-20 pt-4">
-      {/* Further increased padding from the top */}
       <Image
         source={icon}
         resizeMode="contain"

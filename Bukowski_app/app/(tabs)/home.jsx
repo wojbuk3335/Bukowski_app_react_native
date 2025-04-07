@@ -1,22 +1,22 @@
 import React, { useContext } from 'react';
-import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, Button } from 'react-native';
 import { GlobalStateContext } from '../../context/GlobalState'; // Import global state context
+import { router } from 'expo-router'; // Import router for navigation
 
 const Home = () => {
-  const { user } = useContext(GlobalStateContext); // Access global state
+  const { user, logout } = useContext(GlobalStateContext); // Access global state
 
-  console.log("Current User in Global State:", user); // Debug log
+  const handleLogout = async () => {
+    await logout(); // Call the logout function to clear user data
+    router.replace("/"); // Redirect to the main page (index.jsx)
+  };
 
   return (
     <>
       <SafeAreaView className="px-4 my-6 bg-primary h-full">
         <View style={styles.container}>
-          <Text style={styles.text}>Welcome to the Home Screen</Text>
-          {user ? (
-            <Text style={styles.text}>Logged in as: {user.role}</Text> // Display user email
-          ) : (
-            <Text style={styles.text}>No user logged in</Text> // Fallback message
-          )}
+          <Button title="Logout" onPress={handleLogout} color="#FF6347" />
+          <Text style={styles.text}>Welcome, {user?.token}</Text>
         </View>
       </SafeAreaView>
     </>
@@ -34,5 +34,6 @@ const styles = StyleSheet.create({
   text: {
     color: 'white',
     fontSize: 16,
+    marginBottom: 10,
   },
 });

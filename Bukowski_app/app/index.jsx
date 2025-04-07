@@ -7,11 +7,8 @@ import { images } from "../constants";
 import CustomButton from "../components/CustomButton";
 
 const Welcome = () => {
-
-
   return (
     <SafeAreaView className="bg-primary h-full">
-
       <ScrollView
         contentContainerStyle={{
           height: "100%",
@@ -34,7 +31,7 @@ const Welcome = () => {
             <Text className="text-3xl text-white font-bold text-center">
               Discover Endless{"\n"}
               Possibilities with{" "}
-              <Text className="text-secondary-200">Aora</Text>
+              <Text style={{ color: "#FFD700" }}>Aora</Text>
             </Text>
 
             <Image
@@ -54,7 +51,7 @@ const Welcome = () => {
             handlePress={() => router.push("/sign-in")}
             containerStyles="w-full mt-7"
           />
-          <Link href='/home' style={{}}>go home</Link>
+          <Link href="/home" style={{}}>go home</Link>
         </View>
       </ScrollView>
 

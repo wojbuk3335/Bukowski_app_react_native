@@ -1,34 +1,47 @@
-import { useState, useContext } from "react";
-import { Link, useNavigation } from "expo-router";
+import { useEffect, useState, useContext } from "react";
+import { Link, useNavigation, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, ScrollView, Dimensions, Alert, Image } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { images } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
-import { bukowski_login } from "../../lib/bukowski";
-import { signUp } from "../../lib/appwrite";
 import { GlobalStateContext } from "../../context/GlobalState";
 
+
+
 const SignIn = () => {
-  const [isSubmitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
   const navigation = useNavigation();
-  const { setUser } = useContext(GlobalStateContext); // Access global state
+  const { setUser, bukowski_login, isLoading, user } = useContext(GlobalStateContext); // Access global state
+
+  useEffect(() => {
+    const checkUserInStorage = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          setUser(JSON.parse(userData)); // Restore user data to global state
+          router.replace("/home") // Redirect to home screen
+        }
+      } catch (error) {
+        console.error("Failed to retrieve user data from storage:", error);
+      }
+    };
+
+    checkUserInStorage();
+  }, []);
 
   const submit = async () => {
-    setSubmitting(true);
     try {
       const response = await bukowski_login(form.email, form.password, navigation);
       setUser(response); // Update global state with user data
-      navigation.navigate("(tabs)"); // Redirect to home screen
+      router.replace("/home") // Redirect to home screen
     } catch (error) {
       Alert.alert("Login Failed", error.message);
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -70,7 +83,7 @@ const SignIn = () => {
             title="Sign In"
             handlePress={submit}
             containerStyles="mt-7"
-            isLoading={isSubmitting}
+            isLoading={isLoading} // Use global isLoading state
           />
 
           <View className="flex justify-center pt-5 flex-row gap-2">
