@@ -1,39 +1,38 @@
-import React, { useContext } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, Button } from 'react-native';
-import { GlobalStateContext } from '../../context/GlobalState'; // Import global state context
-import { router } from 'expo-router'; // Import router for navigation
+import React from 'react';
+import { Text, View, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; // Import SafeAreaView for safe area handling
+import { GlobalStateContext } from "../../context/GlobalState"; // Import global state context
+
 
 const Home = () => {
-  const { user, logout } = useContext(GlobalStateContext); // Access global state
-
-  const handleLogout = async () => {
-    await logout(); // Call the logout function to clear user data
-    router.replace("/"); // Redirect to the main page (index.jsx)
-  };
-
+  const { user } = React.useContext(GlobalStateContext); // Access global state
   return (
     <>
-      <SafeAreaView className="px-4 my-6 bg-primary h-full">
-        <View style={styles.container}>
-          <Button title="Logout" onPress={handleLogout} color="#FF6347" />
-          <Text style={styles.text}>Welcome, {user?.token}</Text>
-        </View>
+      <SafeAreaView className="bg-primary">
+        <FlatList
+          data={[{ id: 1 }, { id: 2 }, { id: 3 }]}
+          keyExtractor={(item) => item.id.toString()} // Corrected keyExtractor
+          renderItem={({ item }) => (
+            <Text className="text-3xl text-white">{item.id}</Text>
+          )}
+          ListHeaderComponent={() => {
+            return ( // Explicitly returning JSX
+              <View className="my-6 px-4 space-y-6">
+                <View className="justify-between items-start flex-row mb-6">
+                  <View>
+                    <Text className="font-pmedium text-sm text-gray-100">Welcome Back</Text>
+                    <Text className="font-psemibold text-l text-white">
+                      {user?.email}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            );
+          }}
+        />
       </SafeAreaView>
     </>
   );
 };
 
 export default Home;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: 'white',
-    fontSize: 16,
-    marginBottom: 10,
-  },
-});
