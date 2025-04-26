@@ -29,7 +29,7 @@ const TabLayout = () => {
       <Tabs
         options={{ headerShown: false }}
         screenOptions={{
-          tabBarActiveTintColor: "#FFA001",
+          tabBarActiveTintColor: "#0d6efd", // Zmieniono kolor aktywnego przycisku
           tabBarInactiveTintColor: "#CDCDE0",
           tabBarShowLabel: false,
           tabBarStyle: {
@@ -49,7 +49,7 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.home}
                 color={color}
-                name="Home"
+                name="Szukaj"
                 focused={focused}
               />
             ),
@@ -64,7 +64,7 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.bookmark}
                 color={color}
-                name="Bookmark"
+                name="Sprzedaż"
                 focused={focused}
               />
             ),
@@ -80,7 +80,7 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.plus}
                 color={color}
-                name="Create"
+                name="Dodaj"
                 focused={focused}
               />
             ),
@@ -95,7 +95,7 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.profile}
                 color={color}
-                name="Profile"
+                name="Profil"
                 focused={focused}
               />
             ),

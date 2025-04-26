@@ -1,27 +1,10 @@
-import React from 'react';
-import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import React from "react";
+import QRScanner from "../QRScanner";
+import { GlobalStateContext } from "../../context/GlobalState"; // Import GlobalStateContext
 
-const Create = () => {
-  return (
-    <>
-      <SafeAreaView className="px-4 my-6 bg-primary h-full">
-        <View style={styles.container}>
-          <Text style={styles.text}>Create Screen</Text>
-        </View>
-      </SafeAreaView>
-    </>
-  );
-};
+export default function App() {
+  const { stateData } = React.useContext(GlobalStateContext); // Access stateData from context
+   const { user } = React.useContext(GlobalStateContext); // Access global state
 
-export default Create;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: 'white',
-  },
-});
+  return <QRScanner stateData={stateData}  user={user}/>; // Pass stateData as props
+}
