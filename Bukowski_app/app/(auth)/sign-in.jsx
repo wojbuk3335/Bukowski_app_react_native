@@ -8,8 +8,7 @@ import { images } from "../../constants";
 import CustomButton from "../../components/CustomButton";
 import FormField from "../../components/FormField";
 import { GlobalStateContext } from "../../context/GlobalState";
-
-
+import bukowskiLogo from "./bukowski.png"; // Import the image
 
 const SignIn = () => {
   const [form, setForm] = useState({
@@ -55,13 +54,14 @@ const SignIn = () => {
           }}
         >
           <Image
-            source={images.logo}
+            source={bukowskiLogo} // Use the imported image
             resizeMode="contain"
-            className="w-[115px] h-[34px]"
+            className="w-[190px] h-[54px]"
+            style={{ alignSelf: "center" }} // Center the image horizontally
           />
 
-          <Text className="text-2xl font-semibold text-white mt-10 font-psemibold">
-            Log in to Aora
+          <Text className="text-2xl font-semibold text-white mt-10 font-psemibold text-center">
+            Zaloguj się do aplikacji
           </Text>
 
           <FormField
@@ -73,22 +73,22 @@ const SignIn = () => {
           />
 
           <FormField
-            title="Password"
+            title="Hasło"
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e.trim() })}
             otherStyles="mt-7"
           />
 
           <CustomButton
-            title="Sign In"
+            title="Zologuj się"
             handlePress={submit}
             containerStyles="mt-7"
             isLoading={isLoading} // Use global isLoading state
           />
-
+{/* 
           <View className="flex justify-center pt-5 flex-row gap-2">
             <Text className="text-lg text-gray-100 font-pregular">
-              Don't have an account?
+              Nie masz jeszcze konta?
             </Text>
             <Link
               href="/sign-up"
@@ -96,7 +96,7 @@ const SignIn = () => {
             >
               Signup
             </Link>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
     </SafeAreaView>

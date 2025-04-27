@@ -12,19 +12,27 @@ const FormField = ({
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(false); // Track focus state
 
   return (
     <View className={`space-y-2 ${otherStyles}`}>
-      <Text className="text-base text-gray-100 font-pmedium">{title}</Text>
+      <Text className="text-base text-gray-100 font-pmedium text-center">{title}</Text>
 
-      <View className="w-full h-16 px-4 bg-black-100 rounded-2xl border-2 border-black-200 focus:border-secondary flex flex-row items-center">
+      <View
+        className={`w-full h-16 px-4 bg-black-100 rounded-2xl border-2 flex flex-row items-center`}
+        style={{
+          borderColor: isFocused ? "#0d6efd" : "#000000", // Change border color on focus
+        }}
+      >
         <TextInput
           className="flex-1 text-white font-psemibold text-base"
           value={value}
           placeholder={placeholder}
-          placeholderTextColor="#7B7B8B"
+          placeholderTextColor="#0d6efd"
           onChangeText={handleChangeText}
           secureTextEntry={title === "Password" && !showPassword}
+          onFocus={() => setIsFocused(true)} // Set focus state to true
+          onBlur={() => setIsFocused(false)} // Set focus state to false
           {...props}
         />
 

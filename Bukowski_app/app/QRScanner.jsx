@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Pressable, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Pressable, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback, Alert } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Picker } from "@react-native-picker/picker";
+import axios from "axios"; // Import axios for HTTP requests
 
-const QRScanner = ({ stateData, user }) => {
+const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -11,9 +12,8 @@ const QRScanner = ({ stateData, user }) => {
   const [modalMessage, setModalMessage] = useState("");
   const [selectedOption, setSelectedOption] = useState(""); // State for Picker selection
   const [barcode, setBarcode] = useState(""); // State for barcode input
-  const [priceCurrencyPairs, setPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for price-currency pairs
-
-  
+  const [cashPriceCurrencyPairs, setCashPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for cash payment
+  const [cardPriceCurrencyPairs, setCardPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for card payment
 
   if (!permission) return <View />;
 
@@ -26,7 +26,7 @@ const QRScanner = ({ stateData, user }) => {
     );
   }
 
-  const handleScan = ({ data, type }) => {
+  const handleScan = ({ data, type}) => {
     if (!scanned) {
       setScanned(true);
       setBarcode(data); // Set the scanned barcode
@@ -51,34 +51,78 @@ const QRScanner = ({ stateData, user }) => {
     setFacing((prev) => (prev === "back" ? "front" : "back"));
   };
 
-  const handleAddPair = () => {
-    setPriceCurrencyPairs([...priceCurrencyPairs, { price: "", currency: "PLN" }]); // Default to Polish Zloty
+  const handleAddCashPair = () => {
+    setCashPriceCurrencyPairs([...cashPriceCurrencyPairs, { price: "", currency: "PLN" }]);
   };
 
-  const handleRemovePair = (index) => {
-    if (priceCurrencyPairs.length > 1) {
-      const updatedPairs = priceCurrencyPairs.filter((_, i) => i !== index);
-      setPriceCurrencyPairs(updatedPairs);
+  const handleRemoveCashPair = (index) => {
+    if (cashPriceCurrencyPairs.length > 1) {
+      const updatedPairs = cashPriceCurrencyPairs.filter((_, i) => i !== index);
+      setCashPriceCurrencyPairs(updatedPairs);
     }
   };
 
-  const handlePairChange = (index, field, value) => {
-    const updatedPairs = [...priceCurrencyPairs];
+  const handleCashPairChange = (index, field, value) => {
+    const updatedPairs = [...cashPriceCurrencyPairs];
     updatedPairs[index][field] = value;
-    setPriceCurrencyPairs(updatedPairs);
+    setCashPriceCurrencyPairs(updatedPairs);
   };
 
-  const handleSubmit = () => {
+  const handleAddCardPair = () => {
+    setCardPriceCurrencyPairs([...cardPriceCurrencyPairs, { price: "", currency: "PLN" }]);
+  };
+
+  const handleRemoveCardPair = (index) => {
+    if (cardPriceCurrencyPairs.length > 1) {
+      const updatedPairs = cardPriceCurrencyPairs.filter((_, i) => i !== index);
+      setCardPriceCurrencyPairs(updatedPairs);
+    }
+  };
+
+  const handleCardPairChange = (index, field, value) => {
+    const updatedPairs = [...cardPriceCurrencyPairs];
+    updatedPairs[index][field] = value;
+    setCardPriceCurrencyPairs(updatedPairs);
+  };
+
+  const handleSubmit = async () => {
+    const matchedItem = stateData?.find(item => item.barcode === barcode);
+
+    if (!matchedItem) {
+      console.warn("No matched item found for the scanned barcode.");
+    }
+
+    const fullName = matchedItem ? matchedItem.fullName : null;
+
+    const sizeId = matchedItem && Array.isArray(sizes?.sizes)
+      ? sizes.sizes.find(size => size.Roz_Opis?.trim().toLowerCase() === matchedItem.size?.trim().toLowerCase())?._id || null
+      : null;
+
+    const sellingPoint = user?.sellingPoint || "Unknown";
+
     const payload = {
+      fullName,
+      timestamp: new Date().toISOString(),
       barcode,
-      selectedSymbol: selectedOption,
-      priceCurrencyPairs,
-      timestamp: new Date().toISOString(), // Add current date and time
-      seller: user?.email || null, // Add user email as seller
+      sizeId,
+      sellingPoint,
+      from: selectedOption,
+      cash: cashPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),
+      card: cardPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),
     };
 
-    console.log("Payload to send:", JSON.stringify(payload, null, 2)); // Log the JSON payload
-    setModalVisible(false); // Close the modal
+    console.log("Payload to send:", JSON.stringify(payload, null, 2));
+
+    try {
+      const response = await axios.post("https://bukowskiapp.pl/api/sales/save-sales", payload);
+      console.log("Response from server:", response.data);
+      Alert.alert("Success", "Data saved successfully!");
+    } catch (error) {
+      console.error("Error saving data:", error);
+      Alert.alert("Error", "Failed to save data.");
+    }
+
+    setModalVisible(false);
   };
 
   return (
@@ -97,95 +141,123 @@ const QRScanner = ({ stateData, user }) => {
       </CameraView>
 
       {/* Modal for displaying messages */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalLabel}>Sprzedano produkt:</Text>
-              <TextInput
-                style={styles.inputField}
-                value={modalMessage} // Display the fullName or message
-                editable={false} // Make the input non-editable
-              />
-              {/* Barcode Input */}
-              <TextInput
-                style={styles.inputField}
-                value={barcode} // Display the scanned barcode
-                editable={false} // Make the input non-editable
-                placeholder="Barcode"
-              />
-              {/* Dropdown (Picker) */}
-              <Picker
-                selectedValue={selectedOption}
-                onValueChange={(itemValue) => setSelectedOption(itemValue)}
-                style={styles.picker}
-              >
-                {stateData
-                  ?.filter(item => item.barcode === barcode) // Filter items by matching barcode
-                  .map(item => (
-                    <Picker.Item key={item.symbol} label={item.symbol} value={item.symbol} />
-                  ))}
-              </Picker>
-              {/* Price-Currency Pairs */}
-              {priceCurrencyPairs.map((pair, index) => (
-                <View key={index} style={styles.pairContainer}>
-                  <TextInput
-                    style={styles.priceInput}
-                    value={pair.price}
-                    onChangeText={(value) => handlePairChange(index, "price", value)}
-                    placeholder="Price"
-                    keyboardType="numeric"
-                  />
-                  <Picker
-                    selectedValue={pair.currency}
-                    onValueChange={(value) => handlePairChange(index, "currency", value)}
-                    style={styles.currencyPicker}
-                  >
-                    <Picker.Item label="PLN" value="PLN" />
-                    <Picker.Item label="HUF" value="HUF" />
-                    <Picker.Item label="GBP" value="GBP" />
-                    <Picker.Item label="ILS" value="ILS" />
-                    <Picker.Item label="USD" value="USD" />
-                    <Picker.Item label="EUR" value="EUR" />
-                    <Picker.Item label="CAN" value="CAN" />
-                  </Picker>
-                  {/* Remove Pair Button */}
-                  <Pressable
-                    style={styles.removePairButton}
-                    onPress={() => handleRemovePair(index)}
-                  >
-                    <Text style={styles.removePairButtonText}>Usuń</Text>
-                  </Pressable>
-                </View>
+      {modalVisible && (
+  <View style={styles.fullScreenContainer}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalLabel}>Sprzedano produkt:</Text>
+          <TextInput
+            style={styles.inputField}
+            value={modalMessage} // Display the fullName or message
+            editable={false} // Make the input non-editable
+          />
+          {/* Display Selling Point */}
+          <TextInput
+            style={styles.inputField}
+            value={user?.sellingPoint || "Unknown"} // Display the sellingPoint
+            editable={false} // Make the input non-editable
+            placeholder="Selling Point"
+          />
+          {/* Barcode Input */}
+          <TextInput
+            style={styles.inputField}
+            value={barcode} // Display the scanned barcode
+            editable={false} // Make the input non-editable
+            placeholder="Barcode"
+          />
+          {/* Dropdown (Picker) */}
+          <Picker
+            selectedValue={selectedOption}
+            onValueChange={(itemValue) => setSelectedOption(itemValue)}
+            style={styles.picker}
+          >
+            {stateData
+              ?.filter(item => item.barcode === barcode) // Filter items by matching barcode
+              .map(item => (
+                <Picker.Item key={item.symbol} label={item.symbol} value={item.symbol} />
               ))}
-              <Pressable style={styles.addPairButton} onPress={handleAddPair}>
-                <Text style={styles.addPairButtonText}>Dodaj parę</Text>
+          </Picker>
+          {/* Payment Sections */}
+          <Text style={styles.modalText}>Płatność gotówką</Text>
+          {cashPriceCurrencyPairs.map((pair, index) => (
+            <View key={`cash-${index}`} style={styles.pairContainer}>
+              <TextInput
+                style={styles.priceInput}
+                value={pair.price}
+                onChangeText={(value) => handleCashPairChange(index, "price", value)}
+                placeholder="Price"
+                keyboardType="numeric"
+              />
+              <Picker
+                selectedValue={pair.currency}
+                onValueChange={(value) => handleCashPairChange(index, "currency", value)}
+                style={styles.currencyPicker}
+              >
+                <Picker.Item label="PLN" value="PLN" />
+                <Picker.Item label="HUF" value="HUF" />
+                <Picker.Item label="GBP" value="GBP" />
+                <Picker.Item label="ILS" value="ILS" />
+                <Picker.Item label="USD" value="USD" />
+                <Picker.Item label="EUR" value="EUR" />
+                <Picker.Item label="CAN" value="CAN" />
+              </Picker>
+              <Pressable
+                style={styles.removePairButton}
+                onPress={() => handleRemoveCashPair(index)}
+              >
+                <Text style={styles.removePairButtonText}>Usuń</Text>
               </Pressable>
-              <View style={styles.modalButtons}>
-                {/* "Anuluj" Button */}
-                <Pressable
-                  style={[styles.button, styles.cancelButton]}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text style={styles.buttonText}>Anuluj</Text>
-                </Pressable>
-                {/* "Dodaj" Button */}
-                <Pressable
-                  style={[styles.button, styles.addButton]}
-                  onPress={handleSubmit} // Call handleSubmit on press
-                >
-                  <Text style={styles.buttonText}>Dodaj</Text>
-                </Pressable>
-              </View>
             </View>
+          ))}
+          <Pressable style={styles.addPairButton} onPress={handleAddCashPair}>
+            <Text style={styles.addPairButtonText}>Dodaj parę</Text>
+          </Pressable>
+          {/* Payment by Card Section */}
+          <Text style={styles.modalText}>Płatność kartą</Text>
+          {cardPriceCurrencyPairs.map((pair, index) => (
+            <View key={`card-${index}`} style={styles.pairContainer}>
+              <TextInput
+                style={styles.priceInput}
+                value={pair.price}
+                onChangeText={(value) => handleCardPairChange(index, "price", value)}
+                placeholder="Price"
+                keyboardType="numeric"
+              />
+              <Picker
+                selectedValue={pair.currency}
+                onValueChange={(value) => handleCardPairChange(index, "currency", value)}
+                style={styles.currencyPicker}
+              >
+                <Picker.Item label="PLN" value="PLN" />
+                <Picker.Item label="HUF" value="HUF" />
+                <Picker.Item label="GBP" value="GBP" />
+                <Picker.Item label="ILS" value="ILS" />
+                <Picker.Item label="USD" value="USD" />
+                <Picker.Item label="EUR" value="EUR" />
+                <Picker.Item label="CAN" value="CAN" />
+              </Picker>
+            </View>
+          ))}
+          <View style={styles.modalButtons}>
+            <Pressable
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>Anuluj</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.addButton]}
+              onPress={handleSubmit}
+            >
+              <Text style={styles.buttonText}>Dodaj</Text>
+            </Pressable>
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+        </View>
+      </ScrollView>
+    </TouchableWithoutFeedback>
+  </View>
+)}
     </View>
   );
 };
@@ -335,6 +407,15 @@ const styles = StyleSheet.create({
   removePairButtonText: {
     color: "white",
     fontSize: 14,
+  },
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: "white",
+    paddingTop: 20,
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    padding: 20,
   },
 });
 
