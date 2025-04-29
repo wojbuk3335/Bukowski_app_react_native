@@ -94,17 +94,13 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
 
     const fullName = matchedItem ? matchedItem.fullName : null;
 
-    const sizeId = matchedItem && Array.isArray(sizes?.sizes)
-      ? sizes.sizes.find(size => size.Roz_Opis?.trim().toLowerCase() === matchedItem.size?.trim().toLowerCase())?._id || null
-      : null;
-
     const sellingPoint = user?.sellingPoint || "Unknown";
 
     const payload = {
       fullName,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleString(), // Format to include both date and time
       barcode,
-      sizeId,
+      sizeId: matchedItem?.size || null, // Send the actual size instead of sizeId
       sellingPoint,
       from: selectedOption,
       cash: cashPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),

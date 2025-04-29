@@ -94,7 +94,7 @@ export const GlobalStateProvider = ({ children }) => {
     const bukowski_login = async (email, password, navigation) => {
         setIsLoading(true); // Set loading to true
         try {
-            const response = await fetch("http://localhost:3000/api/user/login", {
+            const response = await fetch("https://bukowskiapp.pl/api/user/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
