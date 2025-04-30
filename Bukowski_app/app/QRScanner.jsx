@@ -100,7 +100,7 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
       fullName,
       timestamp: new Date().toLocaleString(), // Format to include both date and time
       barcode,
-      sizeId: matchedItem?.size || null, // Send the actual size instead of sizeId
+      size: matchedItem?.size || null, // Use size instead of sizeId
       sellingPoint,
       from: selectedOption,
       cash: cashPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),
