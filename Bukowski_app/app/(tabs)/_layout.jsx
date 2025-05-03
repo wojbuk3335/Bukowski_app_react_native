@@ -49,7 +49,23 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.home}
                 color={color}
-                name="Szukaj"
+                name="Sprzedaż"
+                focused={focused}
+              />
+            ),
+          }}
+        />
+
+<Tabs.Screen
+          name="writeoff"
+          options={{
+            title: "Odpisać",
+            headerShown: false,
+            tabBarIcon: ({ color, focused }) => (
+              <TabIcon
+                icon={icons.rightArrow} // Use an appropriate icon for write-off
+                color={color}
+                name="Odpisać"
                 focused={focused}
               />
             ),
@@ -64,7 +80,7 @@ const TabLayout = () => {
               <TabIcon
                 icon={icons.bookmark}
                 color={color}
-                name="Sprzedaż"
+                name="Szukaj"
                 focused={focused}
               />
             ),
@@ -86,6 +102,7 @@ const TabLayout = () => {
             ),
           }}
         />
+
         <Tabs.Screen
           name="profile"
           options={{

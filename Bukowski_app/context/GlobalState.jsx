@@ -1,5 +1,6 @@
 import React, { createContext, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router"; // Import router
 
 export const GlobalStateContext = createContext();
 
@@ -112,6 +113,8 @@ export const GlobalStateProvider = ({ children }) => {
             setIsLoggedIn(true); // Set login status to true
             await AsyncStorage.setItem("user", JSON.stringify(data)); // Save user data locally
 
+            console.log("User data after login:", data); // Log user data
+
             // Fetch additional state after login
             const fetchedState = await fetchState();
             setStateData(fetchedState); // Update global state with fetched data
@@ -127,10 +130,20 @@ export const GlobalStateProvider = ({ children }) => {
     };
 
     const logout = async () => {
-        console.log("User logged out"); // Debug log
-        setUser(null); // Clear user state
-        setIsLoggedIn(false); // Set login status to false
-        await AsyncStorage.removeItem("user"); // Remove user data from storage
+        try {
+            console.log("Logging out..."); // Debug log
+            setUser(null); // Clear user state
+            setIsLoggedIn(false); // Set login status to false
+            setStateData(null); // Clear state data
+            setSizes([]); // Clear sizes
+            setColors([]); // Clear colors
+            setGoods([]); // Clear goods
+            setMatchedItems([]); // Clear matched items
+            await AsyncStorage.clear(); // Clear all AsyncStorage data
+            router.replace("/"); // Redirect to the root route
+        } catch (error) {
+            console.error("Error during logout:", error); // Debug log
+        }
     };
 
     React.useEffect(() => {

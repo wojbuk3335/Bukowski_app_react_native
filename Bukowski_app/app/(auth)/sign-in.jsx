@@ -23,8 +23,11 @@ const SignIn = () => {
       try {
         const userData = await AsyncStorage.getItem("user");
         if (userData) {
+          console.log("User found in storage:", userData); // Debug log
           setUser(JSON.parse(userData)); // Restore user data to global state
-          router.replace("/home") // Redirect to home screen
+          router.replace("/home"); // Redirect to home screen
+        } else {
+          console.log("No user found in storage."); // Debug log
         }
       } catch (error) {
         console.error("Failed to retrieve user data from storage:", error);
@@ -53,16 +56,7 @@ const SignIn = () => {
             minHeight: Dimensions.get("window").height - 100,
           }}
         >
-          <Image
-            source={bukowskiLogo} // Use the imported image
-            resizeMode="contain"
-            className="w-[190px] h-[54px]"
-            style={{ alignSelf: "center" }} // Center the image horizontally
-          />
 
-          <Text className="text-2xl font-semibold text-white mt-10 font-psemibold text-center">
-            Zaloguj się do aplikacji
-          </Text>
 
           <FormField
             title="Email"
@@ -77,26 +71,22 @@ const SignIn = () => {
             value={form.password}
             handleChangeText={(e) => setForm({ ...form, password: e.trim() })}
             otherStyles="mt-7"
+            secureTextEntry={true} // Explicitly enable secure text entry
           />
 
           <CustomButton
             title="Zologuj się"
             handlePress={submit}
-            containerStyles="mt-7"
+            containerStyles="mt-7 mb-4"
             isLoading={isLoading} // Use global isLoading state
           />
-{/* 
-          <View className="flex justify-center pt-5 flex-row gap-2">
-            <Text className="text-lg text-gray-100 font-pregular">
-              Nie masz jeszcze konta?
-            </Text>
-            <Link
-              href="/sign-up"
-              className="text-lg font-psemibold text-secondary"
-            >
-              Signup
-            </Link>
-          </View> */}
+            
+          <Image
+            source={bukowskiLogo} // Use the imported image
+            resizeMode="contain"
+            className="w-[190px] h-[54px] mt-4"
+            style={{ alignSelf: "center", marginBottom: 20 }} // Center the image and add spacing
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
