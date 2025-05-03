@@ -30,13 +30,13 @@ const FormField = ({
           placeholder={placeholder}
           placeholderTextColor="#0d6efd"
           onChangeText={handleChangeText}
-          secureTextEntry={title === "Password" && !showPassword}
+          secureTextEntry={props.secureTextEntry && !showPassword} // Use secureTextEntry prop
           onFocus={() => setIsFocused(true)} // Set focus state to true
           onBlur={() => setIsFocused(false)} // Set focus state to false
           {...props}
         />
 
-        {title === "Password" && (
+        {props.secureTextEntry && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
             <Image
               source={!showPassword ? icons.eye : icons.eyeHide}

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Pressable, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback, Alert } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Pressable, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback, Alert, FlatList } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios"; // Import axios for HTTP requests
@@ -14,6 +14,26 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   const [barcode, setBarcode] = useState(""); // State for barcode input
   const [cashPriceCurrencyPairs, setCashPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for cash payment
   const [cardPriceCurrencyPairs, setCardPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for card payment
+  const [currencyMenuVisible, setCurrencyMenuVisible] = useState(false);
+  const [currentCurrencyIndex, setCurrentCurrencyIndex] = useState(null);
+  const [currentCurrencyType, setCurrentCurrencyType] = useState(""); // "cash" or "card"
+  const [sellingPointMenuVisible, setSellingPointMenuVisible] = useState(false); // State for "Sprzedano od" popup
+  const availableCurrencies = ["PLN", "HUF", "GBP", "ILS", "USD", "EUR", "CAN"];
+
+  const openSellingPointMenu = () => {
+    setSellingPointMenuVisible(true);
+  };
+
+  const selectSellingPoint = (point) => {
+    setSelectedOption(point);
+    setSellingPointMenuVisible(false);
+  };
+
+  const getMatchingSymbols = () => {
+    return stateData
+      ?.filter((item) => item.barcode === barcode) // Filter items by matching barcode
+      .map((item) => item.symbol) || []; // Extract symbols
+  };
 
   if (!permission) return <View />;
 
@@ -26,7 +46,7 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
     );
   }
 
-  const handleScan = ({ data, type}) => {
+  const handleScan = ({ data, type }) => {
     if (!scanned) {
       setScanned(true);
       setBarcode(data); // Set the scanned barcode
@@ -83,6 +103,21 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
     const updatedPairs = [...cardPriceCurrencyPairs];
     updatedPairs[index][field] = value;
     setCardPriceCurrencyPairs(updatedPairs);
+  };
+
+  const openCurrencyMenu = (index, type) => {
+    setCurrentCurrencyIndex(index);
+    setCurrentCurrencyType(type);
+    setCurrencyMenuVisible(true);
+  };
+
+  const selectCurrency = (currency) => {
+    if (currentCurrencyType === "cash") {
+      handleCashPairChange(currentCurrencyIndex, "currency", currency);
+    } else if (currentCurrencyType === "card") {
+      handleCardPairChange(currentCurrencyIndex, "currency", currency);
+    }
+    setCurrencyMenuVisible(false);
   };
 
   const handleSubmit = async () => {
@@ -335,7 +370,7 @@ const styles = StyleSheet.create({
     width: "100%", // Full width
     height: "100%", // Full height
     padding: 20,
-    backgroundColor: "white",
+    backgroundColor: "black", // Set background color to black
     borderRadius: 0, // Remove border radius for full-screen effect
     alignItems: "center",
     zIndex: 10, // Ensure modal content is above other elements
@@ -350,16 +385,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 20,
     textAlign: "center",
+    color: "white", // Set text color to white
   },
   closeButton: {
-    backgroundColor: "black",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    top: 10, // Place it near the top
+    right: 10, // Place it on the right side
+    backgroundColor: "red", // Set background color to red
+    borderRadius: 100, // Make the button round
+    position: "absolute", // Position it absolutely
+    width: 30, // Set width and height for the button
+    height: 30,
+    justifyContent: "center", // Center the text inside the button
+
   },
   closeButtonText: {
-    color: "white",
+    color: "white", // Set close button text color to white
     fontSize: 16,
+    textAlign: "center", // Center the text
   },
   inputField: {
     height: 40,
@@ -368,11 +410,16 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: "100%",
     paddingHorizontal: 10,
+    color: "white", // Set input text color to white
+    backgroundColor: "black", // Match input background with modal
   },
   pairContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
+    outlineWidth: 1, // Add outline width
+    outlineColor: "white", // Add outline color
+    outlineStyle: "solid", // Add outline style
   },
   priceInput: {
     flex: 1,
@@ -385,7 +432,7 @@ const styles = StyleSheet.create({
   addPairButton: {
     marginTop: 10,
     padding: 10,
-    backgroundColor: "blue",
+    backgroundColor: "rgb(13, 110, 253)", // Set background color to blue
     borderRadius: 5,
     alignItems: "center",
   },
@@ -395,10 +442,12 @@ const styles = StyleSheet.create({
   },
   removePairButton: {
     marginLeft: 10,
-    padding: 10,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
     backgroundColor: "red",
     borderRadius: 5,
     alignItems: "center",
+    justifyContent: "center",
   },
   removePairButtonText: {
     color: "white",
@@ -412,6 +461,66 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     flexGrow: 1,
     padding: 20,
+  },
+  currencyButton: {
+    flex: 1,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "black",
+    borderColor: "white",
+    borderWidth: 1,
+    borderRadius: 5,
+    marginLeft: 10,
+  },
+  currencyButtonText: {
+    color: "white",
+    fontSize: 16,
+  },
+  currencyModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+  },
+  currencyModalContent: {
+    width: "80%",
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  currencyModalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 15,
+  },
+  currencyModalItem: {
+    paddingVertical: 5, // Reduce vertical padding for shorter height
+    paddingHorizontal: 30, // Increase horizontal padding for wider items
+    marginVertical: 5, // Add vertical margin between items
+    borderBottomWidth: 1,
+    borderBottomColor: "gray",
+    width: 100, // Set the width to 100px
+    alignItems: "center",
+    backgroundColor: "rgb(13, 110, 253)", // Set background color to blue
+  },
+  currencyModalItemText: {
+    color: "white",
+    fontSize: 16,
+  },
+  currencyModalCloseButton: {
+    marginTop: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "red",
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  currencyModalCloseButtonText: {
+    color: "white",
+    fontSize: 16,
   },
 });
 
