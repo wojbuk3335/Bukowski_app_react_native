@@ -19,6 +19,8 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   const [currentCurrencyType, setCurrentCurrencyType] = useState(""); // "cash" or "card"
   const [sellingPointMenuVisible, setSellingPointMenuVisible] = useState(false); // State for "Sprzedano od" popup
   const availableCurrencies = ["PLN", "HUF", "GBP", "ILS", "USD", "EUR", "CAN"];
+  const [currencyModalVisible, setCurrencyModalVisible] = useState(false); // State for currency modal
+  const [currentCurrencyPairIndex, setCurrentCurrencyPairIndex] = useState(null); // Track the index of the pair being edited
 
   const openSellingPointMenu = () => {
     setSellingPointMenuVisible(true);
@@ -29,10 +31,29 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
     setSellingPointMenuVisible(false);
   };
 
+  const openSellingPointModal = () => {
+    setSellingPointMenuVisible(true);
+  };
+
+  const selectSellingPointFromModal = (point) => {
+    setSelectedOption(point);
+    setSellingPointMenuVisible(false);
+  };
+
   const getMatchingSymbols = () => {
     return stateData
       ?.filter((item) => item.barcode === barcode) // Filter items by matching barcode
       .map((item) => item.symbol) || []; // Extract symbols
+  };
+
+  const openCurrencyModal = (index) => {
+    setCurrentCurrencyPairIndex(index);
+    setCurrencyModalVisible(true);
+  };
+
+  const selectCurrencyFromModal = (currency) => {
+    handleCashPairChange(currentCurrencyPairIndex, "currency", currency);
+    setCurrencyModalVisible(false);
   };
 
   if (!permission) return <View />;
@@ -213,32 +234,76 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
               paddingHorizontal: 10, // Add horizontal padding for better spacing
               paddingVertical: 5, // Add vertical padding for better spacing
               marginBottom: 20, // Add spacing below the Picker
-              width: "100%", // Ensure the Picker container takes full width
+              width: "100%", // Ensure the container takes full width
             }}
           >
-            <Picker
-                  selectedValue={selectedOption}
-                  onValueChange={(itemValue) => setSelectedOption(itemValue)}
-                  style={{
-                    backgroundColor: "black", // Set background to black
-                    color: "white", // Set text color to white
-                    flex: 1, // Ensure the Picker fills the container
-                    paddingBottom: 20, // Add padding to the bottom for better spacing
-                    height: 50, // Ensure enough height for text
-                  }}
-                >
-                  {stateData
-                    ?.filter(item => item.barcode === barcode) // Filter items by matching barcode
-                    .map(item => (
-                      <Picker.Item key={item.symbol} label={item.symbol} value={item.symbol} />
-                ))}
-            </Picker>
+            <TouchableOpacity
+              style={{
+                height: 40,
+                justifyContent: "center",
+                alignItems: "center",
+                backgroundColor: "black",
+                borderRadius: 5,
+              }}
+              onPress={openSellingPointModal}
+            >
+              <Text style={{ color: "white" }}>
+                {selectedOption || "Wybierz punkt sprzedaży"}
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {/* Selling Point Modal */}
+          {sellingPointMenuVisible && (
+            <Modal
+              transparent={true}
+              animationType="slide"
+              visible={sellingPointMenuVisible}
+              onRequestClose={() => setSellingPointMenuVisible(false)}
+            >
+              <View style={styles.currencyModalContainer}>
+                <View style={styles.currencyModalContent}>
+                  <Text style={styles.currencyModalTitle}>Wybierz punkt sprzedaży</Text>
+                  <FlatList
+                    data={getMatchingSymbols()} // Use the filtered symbols
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.currencyModalItem}
+                        onPress={() => selectSellingPointFromModal(item)}
+                      >
+                        <Text style={styles.currencyModalItemText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                  <Pressable
+                    style={styles.currencyModalCloseButton}
+                    onPress={() => setSellingPointMenuVisible(false)}
+                  >
+                    <Text style={styles.currencyModalCloseButtonText}>Zamknij</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+          )}
+
           {/* Payment Sections */}
           
-          
-          
-          <Text style={styles.modalText}>Płatność gotówką</Text>
+          <Text style={{
+            fontSize: 16,
+            marginBottom: 10,
+            textAlign: "center",
+            color: "white", // Set text color to white
+          }}>Płatność gotówką</Text>
+          <View
+            style={{
+              width: "100%", // Full width
+              borderWidth: 1, // Add border width
+              borderColor: "white", // Set border color to white
+              padding: 20, // Add padding for better spacing
+            }}
+          >
+
           {cashPriceCurrencyPairs.map((pair, index) => (
             <View
               key={`cash-${index}`}
@@ -261,65 +326,150 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
                   marginRight: 10, // Add spacing between input and picker
                 }}
                 value={pair.price}
-                onChangeText={(value) => handleCashPairChange(index, "price", value)}
+                onChangeText={(value) => {
+                  const numericValue = value.replace(/[^0-9.]/g, ""); // Allow only numbers and a dot
+                  handleCashPairChange(index, "price", numericValue);
+                }}
                 placeholder="Wpisz kwotę"
                 keyboardType="numeric" // Allow only numeric input
               />
-              <Picker
-                selectedValue={pair.currency}
-                onValueChange={(itemValue) => handleCashPairChange(index, "currency", itemValue)}
+              <TouchableOpacity
                 style={{
-                  flex: 1, // Take up available space
-                  height: 60,
-                  backgroundColor: "black", // Set background to black
-                  color: "white", // Set text color to white/
+                  flex: 1,
+                  height: 40,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  backgroundColor: "black",
                   borderColor: "white",
                   borderWidth: 1,
                   borderRadius: 5,
                 }}
+                onPress={() => openCurrencyModal(index)}
               >
-                <Picker.Item label="PLN" value="PLN" />
-                <Picker.Item label="HUF" value="HUF" />
-                <Picker.Item label="GBP" value="GBP" />
-                <Picker.Item label="ILS" value="ILS" />
-                <Picker.Item label="USD" value="USD" />
-                <Picker.Item label="EUR" value="EUR" />
-                <Picker.Item label="CAN" value="CAN" />
-              </Picker>
+                <Text style={{ color: "white" }}>{pair.currency}</Text>
+              </TouchableOpacity>
+              {index > 0 && (
+                <TouchableOpacity
+                  style={{
+                    marginLeft: 10,
+                    paddingVertical: 5,
+                    paddingHorizontal: 10,
+                    backgroundColor: "red",
+                    borderRadius: 5,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                  onPress={() => handleRemoveCashPair(index)}
+                >
+                  <Text style={{ color: "white" }}>Usuń</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ))}
           <Pressable style={styles.addPairButton} onPress={handleAddCashPair}>
             <Text style={styles.addPairButtonText}>Dodaj parę</Text>
           </Pressable>
+          </View>
 
+          {/* Currency Modal */}
+          {currencyModalVisible && (
+            <Modal
+              transparent={true}
+              animationType="slide"
+              visible={currencyModalVisible}
+              onRequestClose={() => setCurrencyModalVisible(false)}
+            >
+              <View style={styles.currencyModalContainer}>
+                <View style={styles.currencyModalContent}>
+                  <Text style={styles.currencyModalTitle}>Wybierz walutę</Text>
+                  <FlatList
+                    data={availableCurrencies}
+                    keyExtractor={(item) => item}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.currencyModalItem}
+                        onPress={() => selectCurrencyFromModal(item)}
+                      >
+                        <Text style={styles.currencyModalItemText}>{item}</Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                  <Pressable
+                    style={styles.currencyModalCloseButton}
+                    onPress={() => setCurrencyModalVisible(false)}
+                  >
+                    <Text style={styles.currencyModalCloseButtonText}>Zamknij</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </Modal>
+          )}
 
           
           {/* Payment by Card Section */}
-          <Text style={styles.modalText}>Płatność kartą</Text>
-          {cardPriceCurrencyPairs.map((pair, index) => (
-            <View key={`card-${index}`} style={styles.pairContainer}>
-              <TextInput
-                style={styles.priceInput}
-                value={pair.price}
-                onChangeText={(value) => handleCardPairChange(index, "price", value)}
-                placeholder="Price"
-                keyboardType="numeric"
-              />
-              <Picker
-                selectedValue={pair.currency}
-                onValueChange={(value) => handleCardPairChange(index, "currency", value)}
-                style={styles.currencyPicker}
+          <Text style={{
+            fontSize: 16,
+            marginBottom: 10,
+            marginTop: 20, // Add margin top for separation
+            textAlign: "center",
+            color: "white", // Set text color to white
+          }}>Płatność kartą</Text>
+          <View
+            style={{
+              width: "100%", // Full width
+              borderWidth: 1, // Add border width
+              borderColor: "white", // Set border color to white
+              padding: 20, // Add padding for better spacing
+            }}
+          >
+            {cardPriceCurrencyPairs.map((pair, index) => (
+              <View
+                key={`card-${index}`}
+                style={{
+                  flexDirection: "row", // Align items side by side
+                  alignItems: "center", // Center items vertically
+                  marginBottom: 20, // Add spacing below each pair
+                }}
               >
-                <Picker.Item label="PLN" value="PLN" />
-                <Picker.Item label="HUF" value="HUF" />
-                <Picker.Item label="GBP" value="GBP" />
-                <Picker.Item label="ILS" value="ILS" />
-                <Picker.Item label="USD" value="USD" />
-                <Picker.Item label="EUR" value="EUR" />
-                <Picker.Item label="CAN" value="CAN" />
-              </Picker>
-            </View>
-          ))}
+                <TextInput
+                  style={{
+                    flex: 1, // Take up available space
+                    height: 40,
+                    borderColor: "white",
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    paddingHorizontal: 10,
+                    color: "white", // Set text color to white
+                    backgroundColor: "black", // Match background with modal
+                    marginRight: 10, // Add spacing between input and picker
+                  }}
+                  value={pair.price}
+                  onChangeText={(value) => {
+                    const numericValue = value.replace(/[^0-9.]/g, ""); // Allow only numbers and a dot
+                    handleCardPairChange(index, "price", numericValue);
+                  }}
+                  placeholder="Wpisz kwotę"
+                  keyboardType="numeric" // Allow only numeric input
+                />
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    height: 40,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    backgroundColor: "black",
+                    borderColor: "white",
+                    borderWidth: 1,
+                    borderRadius: 5,
+                  }}
+                  onPress={() => openCurrencyModal(index)}
+                >
+                  <Text style={{ color: "white" }}>{pair.currency}</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
           <View style={styles.modalButtons}>
             <Pressable
               style={[styles.button, styles.cancelButton]}
@@ -467,9 +617,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 10,
-    outlineWidth: 1, // Add outline width
-    outlineColor: "white", // Add outline color
-    outlineStyle: "solid", // Add outline style
+    borderWidth: 1, // Add border width
+    borderColor: "white", // Add border color
   },
   priceInput: {
     flex: 1,
