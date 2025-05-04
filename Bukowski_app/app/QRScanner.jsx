@@ -173,57 +173,110 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
 
       {/* Modal for displaying messages */}
       {modalVisible && (
-  <View style={styles.fullScreenContainer}>
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+  <View className="flex-1 bg-black w-full h-full justify-start items-center z-5">
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} >
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalLabel}>Sprzedano produkt:</Text>
+        <View style={styles.modalContent} className="flex-1 bg-black w-full h-full justify-start items-center z-5">
+          {/* Close Button */}
+          <Pressable
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.closeButtonText}>X</Text>
+          </Pressable>
+          <Text className='text-l text-white mb-2'>Sprzedano produkt:</Text>
           <TextInput
             style={styles.inputField}
             value={modalMessage} // Display the fullName or message
             editable={false} // Make the input non-editable
           />
-          {/* Display Selling Point */}
+          <Text className='text-l text-white mb-2'>Gdzie</Text>
           <TextInput
             style={styles.inputField}
             value={user?.sellingPoint || "Unknown"} // Display the sellingPoint
             editable={false} // Make the input non-editable
             placeholder="Selling Point"
           />
-          {/* Barcode Input */}
+          <Text className='text-l text-white mb-2'>Kod kreskowy</Text>
           <TextInput
             style={styles.inputField}
             value={barcode} // Display the scanned barcode
             editable={false} // Make the input non-editable
             placeholder="Barcode"
           />
-          {/* Dropdown (Picker) */}
-          <Picker
-            selectedValue={selectedOption}
-            onValueChange={(itemValue) => setSelectedOption(itemValue)}
-            style={styles.picker}
+          <Text className='text-l text-white mb-2'>Sprzedano od:</Text>
+          <View
+            style={{
+              borderWidth: 1, // Increase border width for better visibility
+              borderColor: "white", // Set border color to white
+              borderRadius: 5, // Add rounded corners
+              paddingHorizontal: 10, // Add horizontal padding for better spacing
+              paddingVertical: 5, // Add vertical padding for better spacing
+              marginBottom: 20, // Add spacing below the Picker
+              width: "100%", // Ensure the Picker container takes full width
+            }}
           >
-            {stateData
-              ?.filter(item => item.barcode === barcode) // Filter items by matching barcode
-              .map(item => (
-                <Picker.Item key={item.symbol} label={item.symbol} value={item.symbol} />
-              ))}
-          </Picker>
+            <Picker
+                  selectedValue={selectedOption}
+                  onValueChange={(itemValue) => setSelectedOption(itemValue)}
+                  style={{
+                    backgroundColor: "black", // Set background to black
+                    color: "white", // Set text color to white
+                    flex: 1, // Ensure the Picker fills the container
+                    paddingBottom: 20, // Add padding to the bottom for better spacing
+                    height: 50, // Ensure enough height for text
+                  }}
+                >
+                  {stateData
+                    ?.filter(item => item.barcode === barcode) // Filter items by matching barcode
+                    .map(item => (
+                      <Picker.Item key={item.symbol} label={item.symbol} value={item.symbol} />
+                ))}
+            </Picker>
+          </View>
           {/* Payment Sections */}
+          
+          
+          
           <Text style={styles.modalText}>Płatność gotówką</Text>
           {cashPriceCurrencyPairs.map((pair, index) => (
-            <View key={`cash-${index}`} style={styles.pairContainer}>
+            <View
+              key={`cash-${index}`}
+              style={{
+                flexDirection: "row", // Align items side by side
+                alignItems: "center", // Center items vertically
+                marginBottom: 20, // Add spacing below each pair
+              }}
+            >
               <TextInput
-                style={styles.priceInput}
+                style={{
+                  flex: 1, // Take up available space
+                  height: 40,
+                  borderColor: "white",
+                  borderWidth: 1,
+                  borderRadius: 5,
+                  paddingHorizontal: 10,
+                  color: "white", // Set text color to white
+                  backgroundColor: "black", // Match background with modal
+                  marginRight: 10, // Add spacing between input and picker
+                }}
                 value={pair.price}
                 onChangeText={(value) => handleCashPairChange(index, "price", value)}
-                placeholder="Price"
-                keyboardType="numeric"
+                placeholder="Wpisz kwotę"
+                keyboardType="numeric" // Allow only numeric input
               />
               <Picker
                 selectedValue={pair.currency}
-                onValueChange={(value) => handleCashPairChange(index, "currency", value)}
-                style={styles.currencyPicker}
+                onValueChange={(itemValue) => handleCashPairChange(index, "currency", itemValue)}
+                style={{
+                  flex: 1, // Take up available space
+                  height: 60,
+                  backgroundColor: "black", // Set background to black
+                  color: "white", // Set text color to white/
+                  borderColor: "white",
+                  borderWidth: 1,
+                  borderRadius: 5,
+                }}
               >
                 <Picker.Item label="PLN" value="PLN" />
                 <Picker.Item label="HUF" value="HUF" />
@@ -233,17 +286,14 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
                 <Picker.Item label="EUR" value="EUR" />
                 <Picker.Item label="CAN" value="CAN" />
               </Picker>
-              <Pressable
-                style={styles.removePairButton}
-                onPress={() => handleRemoveCashPair(index)}
-              >
-                <Text style={styles.removePairButtonText}>Usuń</Text>
-              </Pressable>
             </View>
           ))}
           <Pressable style={styles.addPairButton} onPress={handleAddCashPair}>
             <Text style={styles.addPairButtonText}>Dodaj parę</Text>
           </Pressable>
+
+
+          
           {/* Payment by Card Section */}
           <Text style={styles.modalText}>Płatność kartą</Text>
           {cardPriceCurrencyPairs.map((pair, index) => (
