@@ -11,16 +11,18 @@ const WriteOff = () => {
     const [users, setUsers] = useState([]); // List of users for transfer
     const [transfers, setTransfers] = useState([]); // List of current transfers
 
-    const filteredData = stateData.filter(item => item.symbol === user?.symbol); // Use optional chaining
+    // Ensure stateData and user are not null
+    const filteredData = stateData?.filter(item => item.symbol === user?.symbol) || []; // Fallback to empty array
 
     useFocusEffect(
         React.useCallback(() => {
-            fetchTransfers();
-        }, [stateData])
+            if (user) fetchTransfers(); // Only fetch transfers if user exists
+        }, [stateData, user])
     );
 
     const fetchTransfers = async () => {
         try {
+            if (!user) return; // Ensure user is defined
             const response = await fetch(`https://bukowskiapp.pl/api/transfer/${user.symbol}`);
             const data = await response.json();
             setTransfers(data);
@@ -129,7 +131,7 @@ const WriteOff = () => {
             <FlatList
                 ListHeaderComponent={
                     <Text style={styles.headerText}>
-                        Stan użytkownika: {user.email}
+                        Stan użytkownika: {user?.email || "Nieznany użytkownik"}
                     </Text>
                 }
                 contentContainerStyle={{ paddingHorizontal: 0 }}
