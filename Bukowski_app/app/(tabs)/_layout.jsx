@@ -1,21 +1,36 @@
 import { StatusBar } from "expo-status-bar";
 import { Tabs } from "expo-router";
 import { Image, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import EvilIcons from "@expo/vector-icons/FontAwesome";
 
 import { icons } from "../../constants";
 
-const TabIcon = ({ icon, color, name, focused }) => {
+const TabIcon = ({ icon, color, name, focused, customIcon }) => {
   return (
-    <View className="flex items-center justify-center gap-2 w-20 pt-4">
-      <Image
-        source={icon}
-        resizeMode="contain"
-        tintColor={color}
-        className="w-6 h-6"
-      />
+    <View
+      className="flex items-center justify-center gap-2 w-20 pt-4"
+      style={{ height: 60 }} // Ensures enough height for the icon and text
+    >
+      {customIcon ? (
+        <Ionicons
+          name={customIcon}
+          size={29}
+          color={color}
+          style={{ marginBottom: 0 }} // Reduced margin for consistent spacing
+        />
+      ) : (
+        <Image
+          source={icon}
+          resizeMode="contain"
+          tintColor={color}
+          className="w-6 h-6 mb-1"
+        />
+      )}
       <Text
         className={`${focused ? "font-psemibold" : "font-pregular"} text-xs`}
-        style={{ color: color }}
+        style={{ color: color, textAlign: "center" }} // Ensures text alignment
       >
         {name}
       </Text>
@@ -56,14 +71,14 @@ const TabLayout = () => {
           }}
         />
 
-<Tabs.Screen
+        <Tabs.Screen
           name="writeoff"
           options={{
             title: "Odpisać",
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                icon={icons.rightArrow} // Use an appropriate icon for write-off
+                customIcon="arrow-forward" // Ionicons arrow icon
                 color={color}
                 name="Odpisać"
                 focused={focused}

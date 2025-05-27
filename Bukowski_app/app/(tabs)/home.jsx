@@ -1,12 +1,20 @@
-import React, { useState } from 'react';
-import { Text, View, FlatList, TouchableOpacity, Modal, Pressable, RefreshControl, Alert, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, FlatList, TouchableOpacity, Modal, Pressable, RefreshControl, Alert, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // Import SafeAreaView for safe area handling
 import { GlobalStateContext } from "../../context/GlobalState"; // Import global state context
 import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect
 
 const Home = () => {
   const { user, logout } = React.useContext(GlobalStateContext); // Access global state and logout function
-  console.log('User:', user); // Log the user object
+
+  if (!user) {
+    return (
+      <View className="flex-1 justify-center items-center bg-black">
+        <Text className="text-white text-lg">Proszę się zalogować</Text>
+      </View>
+    );
+  }
+
   const [salesData, setSalesData] = useState([]); // State to store API data
   const [filteredData, setFilteredData] = useState([]); // State to store filtered data
   const [totals, setTotals] = useState({ cash: {}, card: {} }); // State to store aggregated totals
@@ -15,6 +23,7 @@ const Home = () => {
   const [refreshing, setRefreshing] = useState(false); // State for refresh control
   const [editModalVisible, setEditModalVisible] = useState(false); // State for edit modal visibility
   const [editData, setEditData] = useState(null); // State to store data for editing
+  const [transfers, setTransfers] = useState([]); // State to store transfers
 
   const fetchSalesData = async () => {
     try {
@@ -85,9 +94,20 @@ const Home = () => {
     }
   };
 
+  const fetchTransfers = async () => {
+    try {
+      const response = await fetch(`https://bukowskiapp.pl/api/transfer/${user.symbol}`);
+      const data = await response.json();
+      setTransfers(data);
+    } catch (error) {
+      console.error("Error fetching transfers:", error);
+    }
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchSalesData(); // Fetch data when the tab is focused
+      fetchTransfers();
     }, [user?.sellingPoint])
   );
 
@@ -147,8 +167,11 @@ const Home = () => {
             );
           }}
           ListFooterComponent={() => {
+            const odpisanoItems = transfers.filter((t) => t.from === user.symbol); // Items transferred from this point
+            const dopisanoItems = transfers.filter((t) => t.to === user.symbol); // Items transferred to this point
+
             return (
-              <View className="mt-6 px-4">
+              <View className="mt-6">
                 <View className="flex-row justify-between mb-2">
                   <Text className="text-[10px] text-gray-300 font-bold">Suma:</Text>
                   <View className="flex-row">
@@ -168,6 +191,70 @@ const Home = () => {
                     </Text>
                   ))}
                 </View>
+
+                {/* Conditionally render "Odpisano ze stanu" */}
+                {odpisanoItems.length > 0 && (
+                  <>
+                    <Text style={{ color: "white", fontSize: 16, fontWeight: "bold", marginBottom: 10, marginTop: 20 }}>
+                      Odpisano ze stanu:
+                    </Text>
+                    {odpisanoItems.map((item) => (
+                      <View
+                        key={item._id}
+                        style={{
+                          height: 60, // Match height with writeoff.jsx
+                          backgroundColor: "#0d6efd", // Updated background color for "Odpisano"
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingHorizontal: 16,
+                          marginBottom: 8,
+                          borderRadius: 8,
+                          marginHorizontal: 0, // Ensure no side margins
+                        }}
+                      >
+                        <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "bold" }}>
+                          {item.fullName} - {item.size}
+                        </Text>
+                        <Text style={{ color: "#CDCDE0", fontSize: 14 }}>
+                          Odpisano do {item.to} {/* Append destination symbol */}
+                        </Text>
+                      </View>
+                    ))}
+                  </>
+                )}
+
+                {/* Conditionally render "Dopisano do stanu" */}
+                {dopisanoItems.length > 0 && (
+                  <>
+                    <Text style={{ color: "white", fontSize: 16, fontWeight: "bold", marginBottom: 10, marginTop: 20 }}>
+                      Dopisano do stanu:
+                    </Text>
+                    {dopisanoItems.map((item) => (
+                      <View
+                        key={item._id}
+                        style={{
+                          height: 60, // Match height with writeoff.jsx
+                          backgroundColor: "#FFD700", // Yellow background for "Dopisano"
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          paddingHorizontal: 16,
+                          marginBottom: 8,
+                          borderRadius: 8,
+                          marginHorizontal: 0, // Ensure no side margins
+                        }}
+                      >
+                        <Text style={{ color: "#000000", fontSize: 16, fontWeight: "bold", flex: 1 }}>
+                          {item.fullName} - {item.size}
+                        </Text>
+                        <Text style={{ color: "#000000", fontSize: 14, textAlign: "right" }}>
+                          Dopisano z {item.from} {/* Display source symbol */}
+                        </Text>
+                      </View>
+                    ))}
+                  </>
+                )}
               </View>
             );
           }}
