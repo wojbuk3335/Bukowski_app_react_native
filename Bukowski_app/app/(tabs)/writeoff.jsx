@@ -16,23 +16,33 @@ const WriteOff = () => {
 
     useFocusEffect(
         React.useCallback(() => {
-            if (user) fetchTransfers(); // Only fetch transfers if user exists
+            if (user?.symbol) { // Ensure user exists before fetching transfers
+                fetchTransfers(); // Only fetch transfers if user exists
+            }
         }, [stateData, user])
     );
 
-    const fetchTransfers = async () => {
-        try {
-            if (!user) return; // Ensure user is defined
-            const response = await fetch(`https://bukowskiapp.pl/api/transfer/${user.symbol}`);
-            const data = await response.json();
-            setTransfers(data);
-        } catch (error) {
-            console.error("Error fetching transfers:", error);
+const fetchTransfers = async () => {
+    try {
+        const response = await fetch(`https://bukowskiapp.pl/api/transfer/`);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch transfers: ${response.status}`);
         }
-    };
+
+        const data = await response.json();
+        // Filtrowanie transferów na podstawie user.symbol
+        const filteredTransfers = Array.isArray(data)
+            ? data.filter((transfer) => transfer.transfer_from === user?.symbol || transfer.transfer_to === user?.symbol)
+            : [];
+
+        setTransfers(filteredTransfers);
+    } catch (error) {
+        console.error("Error fetching transfers:", error.message);
+        setTransfers([]);
+    }
+};
 
     const openModal = (item) => {
-        console.log("Opening modal for item:", item); // Debug log
         setSelectedItem(item);
         setModalVisible(true);
     };
@@ -66,27 +76,30 @@ const WriteOff = () => {
             return;
         }
 
+        const transferModel = {
+            fullName: selectedItem.fullName,
+            size: selectedItem.size,
+            date: new Date().toISOString(),
+            transfer_from: user.symbol,
+            transfer_to: toSymbol,
+            productId: selectedItem.id,
+        };
+
         try {
-            const response = await fetch("https://bukowskiapp.pl/api/transfer/create", {
+            const response = await fetch("https://bukowskiapp.pl/api/transfer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    productId: selectedItem.id,
-                    fullName: selectedItem.fullName,
-                    size: selectedItem.size,
-                    from: user.symbol,
-                    to: toSymbol,
-                }),
+                body: JSON.stringify(transferModel),
             });
 
+            const responseData = await response.json();
+
             if (!response.ok) {
-                const errorData = await response.json();
-                Alert.alert("Error", errorData.message || "Failed to create transfer.");
+                Alert.alert("Error", responseData.message || "Failed to create transfer.");
                 return;
             }
 
-            console.log("Transfer created successfully");
-            fetchTransfers(); // Refresh transfers
+            fetchTransfers();
             setTransferModalVisible(false);
         } catch (error) {
             console.error("Error creating transfer:", error);
@@ -107,24 +120,25 @@ const WriteOff = () => {
                 return;
             }
 
-            const response = await fetch(`https://bukowskiapp.pl/api/transfer/cancel/${transfer._id}`, {
+            const response = await fetch(`https://bukowskiapp.pl/api/transfer/${transfer.productId}`, {
                 method: "DELETE",
             });
 
             if (!response.ok) {
-                throw new Error("Failed to cancel transfer");
+                throw new Error("Failed to delete transfer");
             }
 
-            console.log("Transfer canceled successfully");
-            fetchTransfers(); // Refresh transfers
+            fetchTransfers();
             closeModal();
         } catch (error) {
-            console.error("Error canceling transfer:", error);
-            Alert.alert("Error", "An unexpected error occurred while canceling the transfer.");
+            console.error("Error deleting transfer:", error);
+            Alert.alert("Error", "An unexpected error occurred while deleting the transfer.");
         }
     };
 
-    const isTransferred = (item) => transfers.some(t => t.productId === item.id);
+    const isTransferred = (item) => {
+        return Array.isArray(transfers) && transfers.some((t) => t.productId === item.id); // Ensure transfers is an array
+    };
 
     return (
         <View style={styles.container}>
@@ -230,29 +244,29 @@ const WriteOff = () => {
             <Modal
                 visible={transferModalVisible}
                 transparent={true}
-                animationType="fade"
+                animationType="slide"
                 onRequestClose={() => setTransferModalVisible(false)}
             >
-                <View style={styles.modalContainer}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalText}>Wybierz użytkownika:</Text>
+                <View style={styles.currencyModalContainer}>
+                    <View style={styles.currencyModalContent}>
+                        <Text style={styles.currencyModalTitle}>Wybierz użytkownika</Text>
                         <FlatList
                             data={users}
                             keyExtractor={(item) => item._id}
                             renderItem={({ item }) => (
                                 <TouchableOpacity
-                                    style={styles.userItem}
+                                    style={styles.currencyModalItem}
                                     onPress={() => initiateTransfer(item.symbol)}
                                 >
-                                    <Text style={styles.userItemText}>{item.symbol}</Text>
+                                    <Text style={styles.currencyModalItemText}>{item.symbol}</Text>
                                 </TouchableOpacity>
                             )}
                         />
                         <Pressable
-                            style={styles.closeButton}
+                            style={styles.currencyModalCloseButton}
                             onPress={() => setTransferModalVisible(false)}
                         >
-                            <Text style={styles.closeButtonText}>Zamknij</Text>
+                            <Text style={styles.currencyModalCloseButtonText}>Zamknij</Text>
                         </Pressable>
                     </View>
                 </View>
@@ -277,7 +291,7 @@ const styles = StyleSheet.create({
     },
     headerText: {
         color: "white",
-        fontSize: 18,
+        fontSize: 13,
         fontWeight: "bold",
         marginBottom: 10,
         textAlign: "center",
@@ -285,7 +299,7 @@ const styles = StyleSheet.create({
     },
     itemContainer: {
         backgroundColor: "#0d6efd",
-        padding: 10,
+        padding: 5,
         borderRadius: 5,
         width: "100%",
         marginVertical: 5,
@@ -295,14 +309,17 @@ const styles = StyleSheet.create({
     },
     itemText: {
         color: "white",
-        fontSize: 16,
+        fontSize: 13, // Standardized font size
+        fontWeight: "bold", // Standardized font weight
+        textAlign: "left",
+        flex: 1,
     },
     menuButton: {
         padding: 5,
     },
     menuText: {
         color: "white",
-        fontSize: 20,
+        fontSize: 20, // Increased font size for the three dots
     },
     modalContainer: {
         flex: 1,
@@ -343,6 +360,51 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     closeButtonText: {
+        color: "white",
+        fontSize: 16,
+    },
+    currencyModalContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+    },
+    currencyModalContent: {
+        width: "80%",
+        backgroundColor: "black",
+        borderRadius: 10,
+        padding: 20,
+        alignItems: "center",
+    },
+    currencyModalTitle: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "white",
+        marginBottom: 15,
+    },
+    currencyModalItem: {
+        paddingVertical: 5, // Reduce vertical padding for shorter height
+        paddingHorizontal: 30, // Increase horizontal padding for wider items
+        marginVertical: 5, // Add vertical margin between items
+        borderBottomWidth: 1,
+        borderBottomColor: "gray",
+        width: 100, // Set the width to 100px
+        alignItems: "center",
+        backgroundColor: "rgb(13, 110, 253)", // Set background color to blue
+    },
+    currencyModalItemText: {
+        color: "white",
+        fontSize: 16,
+    },
+    currencyModalCloseButton: {
+        marginTop: 15,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        backgroundColor: "red",
+        borderRadius: 5,
+        alignItems: "center",
+    },
+    currencyModalCloseButtonText: {
         color: "white",
         fontSize: 16,
     },

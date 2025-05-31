@@ -12,8 +12,8 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   const [modalMessage, setModalMessage] = useState("");
   const [selectedOption, setSelectedOption] = useState(""); // State for Picker selection
   const [barcode, setBarcode] = useState(""); // State for barcode input
-  const [cashPriceCurrencyPairs, setCashPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for cash payment
-  const [cardPriceCurrencyPairs, setCardPriceCurrencyPairs] = useState([{ price: "", currency: "USD" }]); // State for card payment
+  const [cashPriceCurrencyPairs, setCashPriceCurrencyPairs] = useState([{ price: "", currency: "PLN" }]); // State for cash payment
+  const [cardPriceCurrencyPairs, setCardPriceCurrencyPairs] = useState([{ price: "", currency: "PLN" }]); // State for carrd payment
   const [currencyMenuVisible, setCurrencyMenuVisible] = useState(false);
   const [currentCurrencyIndex, setCurrentCurrencyIndex] = useState(null);
   const [currentCurrencyType, setCurrentCurrencyType] = useState(""); // "cash" or "card"
@@ -42,9 +42,9 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
 
   const getMatchingSymbols = () => {
     return stateData
-      ?.filter((item) => item.barcode === barcode) // Filter items by matching barcode
-      .map((item) => item.symbol) || []; // Extract symbols
-  };
+        ?.filter((item) => item.barcode === barcode) // Filter items by matching barcode
+        .map((item) => item.symbol) || []; // Extract symbols
+};
 
   const openCurrencyModal = (index) => {
     setCurrentCurrencyPairIndex(index);
@@ -60,9 +60,9 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
 
   if (!permission.granted) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to access the camera</Text>
-        <Button title="Grant Permission" onPress={requestPermission} />
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <Text style={[styles.message, { marginBottom: 20 }]}>Potrzebujemy Twojej zgody na dostęp do kamery</Text>
+        <Button title="Zezwól" onPress={requestPermission} />
       </View>
     );
   }
@@ -142,13 +142,15 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   };
 
   const handleSubmit = async () => {
-    const matchedItem = stateData?.find(item => item.barcode === barcode);
+    const matchedItems = stateData?.filter(item => item.barcode === barcode);
 
-    if (!matchedItem) {
-      console.warn("No matched item found for the scanned barcode.");
+    if (!matchedItems || matchedItems.length === 0) {
+      console.warn("No matched items found for the scanned barcode.");
     }
 
-    const fullName = matchedItem ? matchedItem.fullName : null;
+    const fullName = matchedItems?.[0]?.fullName || null; // Use the first matched item's fullName
+    const size = matchedItems?.[0]?.size || null; // Use the first matched item's size
+    const symbol = selectedOption || matchedItems?.[0]?.symbol || "Unknown"; // Use selected symbol or fallback
 
     const sellingPoint = user?.sellingPoint || "Unknown";
 
@@ -156,19 +158,24 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
       fullName,
       timestamp: new Date().toLocaleString(), // Format to include both date and time
       barcode,
-      size: matchedItem?.size || null, // Use size instead of sizeId
+      size,
       sellingPoint,
       from: selectedOption,
       cash: cashPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),
       card: cardPriceCurrencyPairs.map(pair => ({ price: pair.price, currency: pair.currency })),
+      symbol // Add symbol field
     };
-
-    console.log("Payload to send:", JSON.stringify(payload, null, 2));
 
     try {
       const response = await axios.post("https://bukowskiapp.pl/api/sales/save-sales", payload);
-      console.log("Response from server:", response.data);
-      Alert.alert("Success", "Data saved successfully!");
+      Alert.alert("Success", "Dane zostały zapisane pomyślnie!");
+
+      // Reset modal state
+      setCashPriceCurrencyPairs([{ price: "", currency: "PLN" }]);
+      setCardPriceCurrencyPairs([{ price: "", currency: "PLN" }]);
+      setBarcode("");
+      setSelectedOption("");
+      setModalMessage("");
     } catch (error) {
       console.error("Error saving data:", error);
       Alert.alert("Error", "Failed to save data.");
@@ -346,7 +353,7 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
                 }}
                 onPress={() => openCurrencyModal(index)}
               >
-                <Text style={{ color: "white" }}>{pair.currency}</Text>
+                <Text style={{ color: "white" }}>{pair.currency || "PLN"}</Text>
               </TouchableOpacity>
               {index > 0 && (
                 <TouchableOpacity
@@ -494,8 +501,8 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  message: { textAlign: "center", marginTop: 20 },
+  container: { flex: 1, backgroundColor: "black",color: "white" },
+  message: { textAlign: "center", marginTop: 20, color: "white" },
   camera: { flex: 1 },
   buttonContainer: {
     position: "absolute",

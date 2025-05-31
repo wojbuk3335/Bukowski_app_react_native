@@ -13,6 +13,7 @@ export const GlobalStateProvider = ({ children }) => {
     const [colors, setColors] = useState([]); // Global state for colors
     const [goods, setGoods] = useState([]); // Global state for goods
     const [matchedItems, setMatchedItems] = useState([]); // Lista dopasowanych elementów
+    const [transferredJackets, setTransferredJackets] = useState([]); // Initialize transferred jackets
 
     const addMatchedItem = (barcode) => {
         if (stateData) {
@@ -30,16 +31,21 @@ export const GlobalStateProvider = ({ children }) => {
 
     const fetchState = async () => {
         try {
+            console.log("Fetching state data..."); // Debug log
             const response = await fetch("https://bukowskiapp.pl/api/state");
+            console.log("Raw response:", response); // Log raw response
             if (!response.ok) {
-                throw new Error("Failed to fetch state");
+                const errorData = await response.json();
+                console.error("Error response data:", errorData); // Log error response data
+                throw new Error(errorData.message || "Failed to fetch state");
             }
             const data = await response.json();
-            console.log("Fetched state:", data); // Debug log
-            setStateData(data); // Set the fetched data into stateData
+            console.log("Fetched state data:", data); // Debug log
+            setStateData(data || []); // Ensure stateData is set to an empty array if data is null
             return data; // Return fetched state
         } catch (error) {
-            console.error("Error fetching state:", error.message);
+            console.error("Error fetching state:", error.message); // Debug log
+            setStateData([]); // Fallback to an empty array in case of error
             throw error;
         }
     };
@@ -139,6 +145,7 @@ export const GlobalStateProvider = ({ children }) => {
             setColors([]); // Clear colors
             setGoods([]); // Clear goods
             setMatchedItems([]); // Clear matched items
+            setTransferredJackets([]); // Clear transferred jackets
             await AsyncStorage.clear(); // Clear all AsyncStorage data
             router.replace("/"); // Redirect to the root route
         } catch (error) {
@@ -147,7 +154,14 @@ export const GlobalStateProvider = ({ children }) => {
     };
 
     React.useEffect(() => {
-        fetchState(); // Fetch state data on app initialization
+        console.log("Initializing GlobalStateProvider..."); // Debug log
+        fetchState()
+            .then((data) => {
+                console.log("State data initialized:", data); // Debug log
+            })
+            .catch((error) => {
+                console.error("Error during state initialization:", error); // Debug log
+            });
         fetchSizes(); // Fetch sizes on app initialization
         fetchColors(); // Fetch colors on app initialization
         fetchGoods(); // Fetch goods on app initialization
@@ -163,10 +177,12 @@ export const GlobalStateProvider = ({ children }) => {
             colors, // Provide colors in the global state
             goods, // Provide goods in the global state
             matchedItems, // Provide matched items in the global state
+            transferredJackets, // Provide transferred jackets in the global state
             setUser: updateUser,
             bukowski_login,
-            logout,
+            logout, // Ensure logout is included in the context value
             addMatchedItem, // Provide function to add matched items
+            setTransferredJackets, // Provide function to update transferred jackets
         }}>
             {children}
         </GlobalStateContext.Provider>

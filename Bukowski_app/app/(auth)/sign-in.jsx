@@ -23,11 +23,9 @@ const SignIn = () => {
       try {
         const userData = await AsyncStorage.getItem("user");
         if (userData) {
-          console.log("User found in storage:", userData); // Debug log
           setUser(JSON.parse(userData)); // Restore user data to global state
           router.replace("/home"); // Redirect to home screen
         } else {
-          console.log("No user found in storage."); // Debug log
         }
       } catch (error) {
         console.error("Failed to retrieve user data from storage:", error);

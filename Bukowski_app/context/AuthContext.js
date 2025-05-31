@@ -15,7 +15,8 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = () => {
-        setAuthData(null);
+        console.log('Logging out from AuthContext'); // Debug log
+        setAuthData(null); // Clear authData
     };
 
     return (

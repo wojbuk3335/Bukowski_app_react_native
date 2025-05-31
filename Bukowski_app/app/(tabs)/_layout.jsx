@@ -48,7 +48,7 @@ const TabLayout = () => {
           tabBarInactiveTintColor: "#CDCDE0",
           tabBarShowLabel: false,
           tabBarStyle: {
-            backgroundColor: "#161622",
+            backgroundColor: "black",
             borderTopWidth: 1,
             borderTopColor: "#232533",
             height: 84,
@@ -78,7 +78,7 @@ const TabLayout = () => {
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
-                customIcon="arrow-forward" // Ionicons arrow icon
+                customIcon="arrow-forward-circle" // Ionicons arrow icon
                 color={color}
                 name="Odpisać"
                 focused={focused}
