@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Pressable, TextInput, ScrollView, Keyboard, TouchableWithoutFeedback, Alert, FlatList } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios"; // Import axios for HTTP requests
 
-const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
+const QRScanner = ({ stateData, user, sizes, colors, goods, isActive }) => {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -21,6 +21,8 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
   const availableCurrencies = ["PLN", "HUF", "GBP", "ILS", "USD", "EUR", "CAN"];
   const [currencyModalVisible, setCurrencyModalVisible] = useState(false); // State for currency modal
   const [currentCurrencyPairIndex, setCurrentCurrencyPairIndex] = useState(null); // Track the index of the pair being edited
+  const [cameraActive, setCameraActive] = useState(false); // Zarządzanie aktywnością kamery
+  const [cameraVisible, setCameraVisible] = useState(true); // Widoczność kamery
 
   const openSellingPointMenu = () => {
     setSellingPointMenuVisible(true);
@@ -56,6 +58,20 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
     setCurrencyModalVisible(false);
   };
 
+  useEffect(() => {
+    if (isActive) {
+      setCameraActive(true); // Aktywuj kamerę, gdy zakładka jest aktywna
+    } else {
+      setCameraActive(false); // Dezaktywuj kamerę, gdy zakładka jest nieaktywna
+      setCameraVisible(false); // Ukryj kamerę
+    }
+  }, [isActive]);
+
+  const handleUnmountCamera = () => {
+    setCameraVisible(false); // Ukryj kamerę
+    setCameraActive(false); // Dezaktywuj kamerę
+  };
+
   if (!permission) return <View />;
 
   if (!permission.granted) {
@@ -63,6 +79,22 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
       <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
         <Text style={[styles.message, { marginBottom: 20 }]}>Potrzebujemy Twojej zgody na dostęp do kamery</Text>
         <Button title="Zezwól" onPress={requestPermission} />
+      </View>
+    );
+  }
+
+  if (!cameraActive || !cameraVisible) {
+    // Renderuj widok zastępczy, gdy kamera jest odłączona
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <Text style={styles.message}></Text>
+        <Button
+          title="Włącz czytnik kodów kreskowych"
+          onPress={() => {
+            setCameraVisible(true); // Ustaw widoczność kamery na true
+            setCameraActive(true); // Aktywuj kamerę
+          }}
+        />
       </View>
     );
   }
@@ -184,6 +216,8 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
     setModalVisible(false);
   };
 
+  if (!isActive) return null; // Render nothing if the tab is not active
+
   return (
     <View style={styles.container}>
       <CameraView
@@ -199,13 +233,12 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
         </View>
       </CameraView>
 
-      {/* Modal for displaying messages */}
       {modalVisible && (
   <View className="flex-1 bg-black w-full h-full justify-start items-center z-5">
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} >
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
         <View style={styles.modalContent} className="flex-1 bg-black w-full h-full justify-start items-center z-5">
-          {/* Close Button */}
+
           <Pressable
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}
@@ -260,7 +293,6 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Selling Point Modal */}
           {sellingPointMenuVisible && (
             <Modal
               transparent={true}
@@ -294,7 +326,7 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
             </Modal>
           )}
 
-          {/* Payment Sections */}
+
           
           <Text style={{
             fontSize: 16,
@@ -378,7 +410,6 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
           </Pressable>
           </View>
 
-          {/* Currency Modal */}
           {currencyModalVisible && (
             <Modal
               transparent={true}
@@ -413,7 +444,6 @@ const QRScanner = ({ stateData, user, sizes, colors, goods }) => {
           )}
 
           
-          {/* Payment by Card Section */}
           <Text style={{
             fontSize: 16,
             marginBottom: 10,

@@ -1,9 +1,19 @@
 import React from "react";
 import QRScanner from "../QRScanner";
-import { GlobalStateContext } from "../../context/GlobalState"; // Import GlobalStateContext
+import { GlobalStateContext } from "../../context/GlobalState";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 
 export default function App() {
-  const { stateData, user, sizes, colors, goods } = React.useContext(GlobalStateContext); // Access all data from context
+  const { stateData, user, sizes, colors, goods } = React.useContext(GlobalStateContext);
+  const isFocused = useIsFocused(); // Check if the tab is focused
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (isFocused) {
+        return () => {}; // Cleanup logic if needed
+      }
+    }, [isFocused])
+  );
 
   return (
     <QRScanner
@@ -12,6 +22,7 @@ export default function App() {
       sizes={sizes}
       colors={colors}
       goods={goods}
-    /> // Pass all data as props
+      isActive={isFocused} // Pass isFocused to QRScanner
+    />
   );
 }

@@ -87,9 +87,9 @@ const TabLayout = () => {
           }}
         />
         <Tabs.Screen
-          name="bookmark"
+          name="search"
           options={{
-            title: "Bookmark",
+            title: "Search",
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
