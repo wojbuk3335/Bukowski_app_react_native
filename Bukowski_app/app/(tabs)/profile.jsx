@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, SafeAreaView, Button } from 'react-native';
 import { GlobalStateContext } from '../../context/GlobalState';
 
 const Profile = () => {
-  const { logout } = useContext(GlobalStateContext); // Access logout function
+  const { logout, user } = useContext(GlobalStateContext); // Access logout function
 
   const handleLogout = async () => {
     await logout(); // Call the logout function
@@ -12,10 +12,20 @@ const Profile = () => {
 
   return (
     <>
-      <SafeAreaView className="px-4 my-6 bg-primary h-full">
+      <SafeAreaView className="px-4 my-6 bg-black h-full">
         <View style={styles.container}>
-          <Text style={styles.text}>Profile Screen</Text>
-          <Button title="Log Out" onPress={logout} color="#FF0000" /> 
+          {/* <Text style={styles.text}>Profile Screen</Text> */}
+          {/* Display user details */}
+          {user && (
+            <View style={styles.userDetails}>
+              {Object.entries(user)
+                .map(([key, value]) => (
+                  <Text key={key} style={styles.userDetailText}>
+                    <Text style={{ fontWeight: 'bold' }}>{key}:</Text> {String(value)}
+                  </Text>
+              ))}
+            </View>
+          )}
         </View>
       </SafeAreaView>
     </>
@@ -32,5 +42,16 @@ const styles = StyleSheet.create({
   },
   text: {
     color: 'white',
+  },
+  userDetails: {
+    marginVertical: 20,
+    alignItems: 'flex-start',
+    width: '100%',
+    paddingHorizontal: 20,
+  },
+  userDetailText: {
+    color: 'white',
+    fontSize: 14,
+    marginBottom: 4,
   },
 });
